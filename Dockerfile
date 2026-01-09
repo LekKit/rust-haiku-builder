@@ -1,5 +1,7 @@
 ARG HAIKU_CROSS_COMPILER_TAG=x86_64-r1beta5
-FROM ghcr.io/haiku/cross-compiler:${HAIKU_CROSS_COMPILER_TAG}
+ARG HAIKU_CROSS_COMPILER_IMAGE=ghcr.io/haiku/cross-compiler:${HAIKU_CROSS_COMPILER_TAG}
+
+FROM ${HAIKU_CROSS_COMPILER_IMAGE}
 
 ARG RUST_REV=haiku-nightly
 ARG RUST_REPO=https://github.com/nielx/rust
@@ -10,7 +12,7 @@ ARG RUST_XPY_COMMAND=build
 ARG RUST_XPY_CONFIG=configs/config-nightly-x86_64.toml
 
 # Required for [compiler-builtins](https://crates.io/crates/compiler_builtins) for wasm32-unknown-unknown (Rust 1.79.0)
-RUN apt-get update && apt-get install -y --no-install-recommends clang
+RUN apt-get update && apt-get install -y --no-install-recommends clang curl cmake ninja-build
 
 COPY tools/pkgman.py /pkgman.py
 
@@ -27,12 +29,25 @@ RUN cd / && chmod a+x fixup.sh && ./fixup.sh
 
 COPY ${RUST_XPY_CONFIG} /build/rust/config.toml
 
+COPY targets/riscv64gc-unknown-haiku.json /
+
+# Who the fuck in the Rust bootstrap passes -march=rv64gc -mabi=lp64 (soft float ABI)???
+# Are they fucked in the head? Anyways, lets fix this in a horrible way
+RUN mv /usr/bin/riscv64-unknown-haiku-gcc /usr/bin/riscv64-unknown-haiku-gcc-orig
+RUN mv /usr/bin/riscv64-unknown-haiku-g++ /usr/bin/riscv64-unknown-haiku-g++-orig
+COPY patches/riscv64-strip-mabi.sh /usr/bin/riscv64-unknown-haiku-gcc
+COPY patches/riscv64-strip-mabi.sh /usr/bin/riscv64-unknown-haiku-g++
+
 RUN cd /build/rust/ && \
+    BOOTSTRAP_SKIP_TARGET_SANITY=1 \
+    RUST_TARGET_PATH=/ \
     I686_UNKNOWN_HAIKU_OPENSSL_LIB_DIR=/system/develop/lib/x86 \
     I686_UNKNOWN_HAIKU_OPENSSL_INCLUDE_DIR=/system/develop/headers/ \
     X86_64_UNKNOWN_HAIKU_OPENSSL_LIB_DIR=/system/develop/lib/ \
     X86_64_UNKNOWN_HAIKU_OPENSSL_INCLUDE_DIR=/system/develop/headers/ \
-    ./x.py -j 8 ${RUST_XPY_COMMAND}
+    RISCV64_UNKNOWN_HAIKU_OPENSSL_LIB_DIR=/system/develop/lib/ \
+    RISCV64_UNKNOWN_HAIKU_OPENSSL_INCLUDE_DIR=/system/develop/headers/ \
+    ./x.py -j $(nproc) ${RUST_XPY_COMMAND}
 
 RUN . "$HOME/.cargo/env" \
     && rustup toolchain link haiku-cross /build/rust/build/x86_64-unknown-linux-gnu/stage1 \
