@@ -7,12 +7,12 @@ ARG HAIKU_CROSS_COMPILER_ARCH=x86_64
 ARG HAIKU_PORTS_URL=https://eu.hpkg.haiku-os.org/haikuports/master/${HAIKU_CROSS_COMPILER_ARCH}/current/
 ARG HAIKU_INSTALL_PACKAGES="openssl openssl_devel curl curl_devel nghttp2 nghttp2_devel libssh2 libssh2_devel"
 
-ARG RUST_REV=main
+ARG RUST_REV=stable
 ARG RUST_REPO=https://github.com/rust-lang/rust
 
 ARG SOURCE_FIXUP_SCRIPT=patches/noop.sh
 ARG RUST_XPY_COMMAND=dist
-ARG RUST_XPY_CONFIG=configs/config-stable-${HAIKU_CROSS_COMPILER_ARCH}.toml
+ARG RUST_XPY_CONFIG=configs/config-stable-${HAIKU_CROSS_COMPILER_ARCH}-131075.toml
 
 # Required for [compiler-builtins](https://crates.io/crates/compiler_builtins) for wasm32-unknown-unknown (Rust 1.79.0)
 RUN apt-get update && apt-get install -y --no-install-recommends clang curl cmake ninja-build pkgconf
