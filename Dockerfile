@@ -12,7 +12,7 @@ ARG RUST_XPY_COMMAND=build
 ARG RUST_XPY_CONFIG=configs/config-nightly-x86_64.toml
 
 # Required for [compiler-builtins](https://crates.io/crates/compiler_builtins) for wasm32-unknown-unknown (Rust 1.79.0)
-RUN apt-get update && apt-get install -y --no-install-recommends clang curl cmake ninja-build
+RUN apt-get update && apt-get install -y --no-install-recommends clang curl cmake ninja-build pkgconf
 
 COPY tools/pkgman.py /pkgman.py
 
@@ -39,6 +39,8 @@ COPY patches/riscv64-strip-mabi.sh /usr/bin/riscv64-unknown-haiku-gcc
 COPY patches/riscv64-strip-mabi.sh /usr/bin/riscv64-unknown-haiku-g++
 
 RUN cd /build/rust/ && \
+    PKG_CONFIG_SYSROOT_DIR=/system/ \
+    PKG_CONFIG_LIBDIR=/system/develop/lib/pkgconfig/ \
     BOOTSTRAP_SKIP_TARGET_SANITY=1 \
     RUST_TARGET_PATH=/ \
     I686_UNKNOWN_HAIKU_OPENSSL_LIB_DIR=/system/develop/lib/x86 \
