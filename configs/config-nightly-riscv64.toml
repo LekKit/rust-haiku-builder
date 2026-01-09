@@ -1,0 +1,28 @@
+[llvm]
+targets = "WebAssembly;RISCV;X86"
+experimental-targets = ""
+static-libstdcpp = false
+download-ci-llvm = false
+
+[build]
+host = ["riscv64gc-unknown-haiku"]
+target = ["riscv64gc-unknown-haiku", "wasm32-unknown-unknown"]
+extended = true
+
+[install]
+prefix = "/boot/system"
+
+[rust]
+channel = "dev"
+lld = true
+deny-warnings = false
+
+[target.riscv64gc-unknown-haiku]
+cc = "riscv64-unknown-haiku-gcc"
+cxx = "riscv64-unknown-haiku-g++"
+ar = "riscv64-unknown-haiku-ar"
+linker = "riscv64-unknown-haiku-gcc"
+rpath = false
+
+[dist]
+compression-formats = ["xz"]
