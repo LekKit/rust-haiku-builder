@@ -20,10 +20,11 @@
     "tier": 3
   },
   "os": "haiku",
-  "position-independent-executables": true,
+  "position-independent-executables": false,
   "relro-level": "full",
   "target-family": [
     "unix"
   ],
-  "target-pointer-width": "64"
+  "target-pointer-width": "64",
+  "tls-model": "global-dynamic"
 }
