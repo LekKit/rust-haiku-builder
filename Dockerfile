@@ -10,7 +10,7 @@ ARG HAIKU_INSTALL_PACKAGES="openssl openssl_devel curl curl_devel nghttp2 nghttp
 ARG RUST_REV=stable
 ARG RUST_REPO=https://github.com/rust-lang/rust
 
-ARG SOURCE_FIXUP_SCRIPT=patches/noop.sh
+ARG SOURCE_FIXUP_SCRIPT=patches/fix-tls-model.sh
 ARG RUST_XPY_COMMAND=dist
 ARG RUST_XPY_CONFIG=configs/config-stable-${HAIKU_CROSS_COMPILER_ARCH}-131075.toml
 
@@ -25,13 +25,15 @@ RUN python3 pkgman.py add-repo ${HAIKU_PORTS_URL} && \
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal \
     && . "$HOME/.cargo/env"
 
+# Prepare Rust bootstrap
 RUN mkdir build && cd /build/ && git clone --depth=1 --branch ${RUST_REV} --shallow-submodules --recurse-submodules ${RUST_REPO}
+COPY ${RUST_XPY_CONFIG} /build/rust/config.toml
 
+# Run fixup script
 COPY ${SOURCE_FIXUP_SCRIPT} /fixup.sh
 RUN cd / && chmod a+x fixup.sh && ./fixup.sh
 
-COPY ${RUST_XPY_CONFIG} /build/rust/config.toml
-
+# Copy non-upstream target definition
 COPY targets/riscv64gc-unknown-haiku.json /build/rust/riscv64gc-unknown-haiku.json
 
 # Who the fuck in the Rust bootstrap passes -march=rv64gc -mabi=lp64 (soft float ABI)???
