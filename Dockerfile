@@ -10,7 +10,7 @@ ARG HAIKU_INSTALL_PACKAGES="openssl openssl_devel curl curl_devel nghttp2 nghttp
 ARG RUST_REV=stable
 ARG RUST_REPO=https://github.com/rust-lang/rust
 
-ARG SOURCE_FIXUP_SCRIPT=patches/fix-tls-model.sh
+ARG SOURCE_FIXUP_SCRIPT=patches/noop.sh
 ARG RUST_XPY_COMMAND=dist
 ARG RUST_XPY_CONFIG=configs/config-stable-${HAIKU_CROSS_COMPILER_ARCH}-131075.toml
 
@@ -33,9 +33,6 @@ COPY ${RUST_XPY_CONFIG} /build/rust/config.toml
 COPY ${SOURCE_FIXUP_SCRIPT} /fixup.sh
 RUN cd / && chmod a+x fixup.sh && ./fixup.sh
 
-# Copy non-upstream target definition
-COPY targets/riscv64gc-unknown-haiku.json /build/rust/riscv64gc-unknown-haiku.json
-
 # Who the fuck in the Rust bootstrap passes -march=rv64gc -mabi=lp64 (soft float ABI)???
 # Are they fucked in the head? Anyways, lets fix this in a horrible way
 RUN mv /usr/bin/riscv64-unknown-haiku-gcc /usr/bin/riscv64-unknown-haiku-gcc-orig || true
@@ -45,7 +42,6 @@ COPY patches/riscv64-strip-mabi.sh /usr/bin/riscv64-unknown-haiku-g++
 
 RUN cd /build/rust/ && \
     BOOTSTRAP_SKIP_TARGET_SANITY=1 \
-    RUST_TARGET_PATH=/build/rust/ \
     PKG_CONFIG_SYSROOT_DIR=/system/ \
     PKG_CONFIG_LIBDIR=/system/develop/lib/pkgconfig/ \
     I686_UNKNOWN_HAIKU_OPENSSL_LIB_DIR=/system/develop/lib/x86 \
